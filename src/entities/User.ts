@@ -7,4 +7,8 @@ export class User extends BaseEntity {
 
     @Column('text')
     name: string;
+
+    @Column('text', {unique: true})
+    githubId: string;
 }
+
