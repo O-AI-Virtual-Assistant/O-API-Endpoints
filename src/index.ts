@@ -1,11 +1,11 @@
 import "reflect-metadata";
 require("dotenv").config();
 import express from "express";
-// import { createConnection } from "typeorm";
+import { createConnection } from "typeorm";
 import { __prod__ } from "./constants";
 import { config } from "dotenv";
-// import { join } from "path";
-// import { Strategy as GitHubStrategy } from "passport-github";
+import { join } from "path";
+import { Strategy as GitHubStrategy } from "passport-github";
 import passport from "passport";
 import { User } from "./entities/User";
 import jwt from "jsonwebtoken";
@@ -14,15 +14,15 @@ import unitTestRoutes from "./commands/unitTests";
 import newChatRoutes from "./commands/newChat";
 
 const main = async () => {
-  // await createConnection({
-  //   type: "postgres",
-  //   logging: !__prod__,
-  //   synchronize: !__prod__,
-  //   database: "Vs-O",
-  //   entities: [join(__dirname, "./entities/*.*")],
-  //   username: "postgres",
-  //   password: "postgres",
-  // });
+  await createConnection({
+    type: "postgres",
+    logging: !__prod__,
+    synchronize: !__prod__,
+    database: "Vs-O",
+    entities: [join(__dirname, "./entities/*.*")],
+    username: "postgres",
+    password: "1234",
+  });
 
   const app = express();
   app.use(
@@ -32,51 +32,58 @@ const main = async () => {
     })
   );
   app.use(express.json());
-  // passport.serializeUser(function (user: any, done) {
-  //   done(null, user.accessToken);
-  // });
-  // app.use(passport.initialize());
+  passport.serializeUser(function (user: any, done) {
+    done(null, user.accessToken);
+  });
+  app.use(passport.initialize());
 
-  // // Passport configuration
-  // passport.use(
-  //   new GitHubStrategy(
-  //     {
-  //       clientID: process.env.GITHUB_CLIENT_ID,
-  //       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  //       callbackURL: "http://localhost:3002/auth/github/callback",
-  //     },
-  //     async (_, __, profile, cb) => {
-  //       let user = await User.findOne({ where: { githubId: profile.id } });
-  //       if (user) {
-  //         user.name = profile.displayName;
-  //         await user.save();
-  //       } else {
-  //         user = await User.create({
-  //           name: profile.displayName,
-  //           githubId: profile.id,
-  //         }).save();
-  //       }
-  //       cb(null, {
-  //         accessToken: jwt.sign(
-  //           { userId: user.id },
-  //           process.env.ACCESS_TOKEN_SECRET,
-  //           {
-  //             expiresIn: "1y",
-  //           }
-  //         ),
-  //       });
-  //     }
-  //   )
-  // );
+  // Passport configuration
+  passport.use(
+    new GitHubStrategy(
+      {
+        clientID: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        callbackURL: "http://localhost:3002/auth/github/callback",
+      },
+      async (_, __, profile, cb) => {
+        let user = await User.findOne({ where: { githubId: profile.id } });
+        if (user) {
+          user.name = profile.displayName;
+          await user.save();
+        } else {
+          user = await User.create({
+            name: profile.displayName,
+            githubId: profile.id,
+          }).save();
+        }
+        cb(null, {
+          accessToken: jwt.sign(
+            { userId: user.id },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+              expiresIn: "1y",
+            }
+          ),
+        });
+      }
+    )
+  );
 
   // Use the route handler for unit test routes
   app.use("/unit-test", unitTestRoutes);
   app.use("/newChat", newChatRoutes);
 
   app.use(express.json());
-  app.use((err: express.Errback, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.status(500).json({ error: 'Internal Server Error' });
-});
+  app.use(
+    (
+      err: express.Errback,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  );
 
   // GitHub authentication routes
   app.get("/auth/github", passport.authenticate("github", { session: false }));
