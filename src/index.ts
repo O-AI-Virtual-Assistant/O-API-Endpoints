@@ -12,6 +12,7 @@ import jwt from "jsonwebtoken";
 import cors from "cors";
 import unitTestRoutes from "./commands/unitTests";
 import newChatRoutes from "./commands/newChat";
+import explainCodeRoutes from "./commands/explainCode";
 
 const main = async () => {
   // await createConnection({
@@ -72,6 +73,7 @@ const main = async () => {
   // Use the route handler for unit test routes
   app.use("/unit-test", unitTestRoutes);
   app.use("/newChat", newChatRoutes);
+  app.use("/explainCode", explainCodeRoutes);
 
   app.use(express.json());
   app.use((err: express.Errback, req: express.Request, res: express.Response, next: express.NextFunction) => {
