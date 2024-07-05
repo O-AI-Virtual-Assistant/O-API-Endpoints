@@ -1,11 +1,11 @@
 import "reflect-metadata";
 require("dotenv").config();
 import express from "express";
-// import { createConnection } from "typeorm";
+import { createConnection } from "typeorm";
 import { __prod__ } from "./constants";
 import { config } from "dotenv";
-// import { join } from "path";
-// import { Strategy as GitHubStrategy } from "passport-github";
+import { join } from "path";
+import { Strategy as GitHubStrategy } from "passport-github";
 import passport from "passport";
 import { User } from "./entities/User";
 import jwt from "jsonwebtoken";
@@ -14,16 +14,17 @@ import unitTestRoutes from "./commands/unitTests";
 import newChatRoutes from "./commands/newChat";
 import explainCodeRoutes from "./commands/explainCode";
 
+
 const main = async () => {
-  // await createConnection({
-  //   type: "postgres",
-  //   logging: !__prod__,
-  //   synchronize: !__prod__,
-  //   database: "Vs-O",
-  //   entities: [join(__dirname, "./entities/*.*")],
-  //   username: "postgres",
-  //   password: "postgres",
-  // });
+  await createConnection({
+    type: "postgres",
+    logging: !__prod__,
+    synchronize: !__prod__,
+    database: "Vs-O",
+    entities: [join(__dirname, "./entities/*.*")],
+    username: "postgres",
+    password: "1234",
+  });
 
   const app = express();
   app.use(
@@ -75,10 +76,18 @@ const main = async () => {
   app.use("/newChat", newChatRoutes);
   app.use("/explainCode", explainCodeRoutes);
 
+
   app.use(express.json());
-  app.use((err: express.Errback, req: express.Request, res: express.Response, next: express.NextFunction) => {
-    res.status(500).json({ error: 'Internal Server Error' });
-});
+  app.use(
+    (
+      err: express.Errback,
+      req: express.Request,
+      res: express.Response,
+      next: express.NextFunction
+    ) => {
+      res.status(500).json({ error: "Internal Server Error" });
+    }
+  );
 
   // GitHub authentication routes
   app.get("/auth/github", passport.authenticate("github", { session: false }));
