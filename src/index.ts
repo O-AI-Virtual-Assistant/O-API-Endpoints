@@ -135,7 +135,7 @@ const main = async () => {
   config();
 
   app.get("/", (_req, res) => {
-    res.send("Hello World!");
+    res.send("Hello World, from O!");
   });
 
   app.listen(3002, () => {
