@@ -44,7 +44,6 @@ router.post("/", async (req: Request, res: Response) => {
     } catch(e) {
         console.error("Error in OpenAI API request:", e);
         return null
-        // answer = "Error occurred while processing the request";
     }
   
 

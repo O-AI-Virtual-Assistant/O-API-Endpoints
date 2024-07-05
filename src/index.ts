@@ -23,7 +23,7 @@ const main = async () => {
     database: "Vs-O",
     entities: [join(__dirname, "./entities/*.*")],
     username: "postgres",
-    password: "1234",
+    password: "postgres",
   });
 
   const app = express();
@@ -34,42 +34,42 @@ const main = async () => {
     })
   );
   app.use(express.json());
-  // passport.serializeUser(function (user: any, done) {
-  //   done(null, user.accessToken);
-  // });
-  // app.use(passport.initialize());
+  passport.serializeUser(function (user: any, done) {
+    done(null, user.accessToken);
+  });
+  app.use(passport.initialize());
 
-  // // Passport configuration
-  // passport.use(
-  //   new GitHubStrategy(
-  //     {
-  //       clientID: process.env.GITHUB_CLIENT_ID,
-  //       clientSecret: process.env.GITHUB_CLIENT_SECRET,
-  //       callbackURL: "http://localhost:3002/auth/github/callback",
-  //     },
-  //     async (_, __, profile, cb) => {
-  //       let user = await User.findOne({ where: { githubId: profile.id } });
-  //       if (user) {
-  //         user.name = profile.displayName;
-  //         await user.save();
-  //       } else {
-  //         user = await User.create({
-  //           name: profile.displayName,
-  //           githubId: profile.id,
-  //         }).save();
-  //       }
-  //       cb(null, {
-  //         accessToken: jwt.sign(
-  //           { userId: user.id },
-  //           process.env.ACCESS_TOKEN_SECRET,
-  //           {
-  //             expiresIn: "1y",
-  //           }
-  //         ),
-  //       });
-  //     }
-  //   )
-  // );
+  // Passport configuration
+  passport.use(
+    new GitHubStrategy(
+      {
+        clientID: process.env.GITHUB_CLIENT_ID,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET,
+        callbackURL: "http://localhost:3002/auth/github/callback",
+      },
+      async (_, __, profile, cb) => {
+        let user = await User.findOne({ where: { githubId: profile.id } });
+        if (user) {
+          user.name = profile.displayName;
+          await user.save();
+        } else {
+          user = await User.create({
+            name: profile.displayName,
+            githubId: profile.id,
+          }).save();
+        }
+        cb(null, {
+          accessToken: jwt.sign(
+            { userId: user.id },
+            process.env.ACCESS_TOKEN_SECRET,
+            {
+              expiresIn: "1y",
+            }
+          ),
+        });
+      }
+    )
+  );
 
   // Use the route handler for unit test routes
   app.use("/unit-test", unitTestRoutes);
