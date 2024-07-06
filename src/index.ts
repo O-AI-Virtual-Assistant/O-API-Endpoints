@@ -17,13 +17,13 @@ import explainCodeRoutes from "./commands/explainCode";
 
 const main = async () => {
   await createConnection({
-    type: "postgres",
+    type: process.env.DATABASE_TYPE as any,
     logging: !__prod__,
     synchronize: !__prod__,
-    database: "Vs-O",
+    database: process.env.DATABASE,
     entities: [join(__dirname, "./entities/*.*")],
-    username: "postgres",
-    password: "postgres",
+    username: process.env.POSTGRES_USER,
+    password: process.env.POSTGRES_PASSWORD,
   });
 
   const app = express();
@@ -51,13 +51,24 @@ const main = async () => {
         let user = await User.findOne({ where: { githubId: profile.id } });
         if (user) {
           user.name = profile.displayName;
+          if (profile.photos && profile.photos.length > 0) {
+            user.userImg = profile.photos[0].value;
+          }
           await user.save();
         } else {
+
+          let userImg = "";
+          if (profile.photos && profile.photos.length > 0) {
+            userImg = profile.photos[0].value;
+          }
+          
           user = await User.create({
             name: profile.displayName,
             githubId: profile.id,
+            userImg: userImg,
           }).save();
         }
+        
         cb(null, {
           accessToken: jwt.sign(
             { userId: user.id },
@@ -70,6 +81,15 @@ const main = async () => {
       }
     )
   );
+   // GitHub authentication routes
+   app.get("/auth/github", passport.authenticate("github", { session: false }));
+   app.get(
+     "/auth/github/callback",
+     passport.authenticate("github", { session: false }),
+     function (req: any, res) {
+       res.redirect(`http://localhost:54321/auth/${req.user.accessToken}`);
+     }
+   );
 
   // Use the route handler for unit test routes
   app.use("/unit-test", unitTestRoutes);
@@ -89,15 +109,7 @@ const main = async () => {
     }
   );
 
-  // GitHub authentication routes
-  app.get("/auth/github", passport.authenticate("github", { session: false }));
-  app.get(
-    "/auth/github/callback",
-    passport.authenticate("github", { session: false }),
-    function (req: any, res) {
-      res.redirect(`http://localhost:54321/auth/${req.user.accessToken}`);
-    }
-  );
+ 
 
   app.get("/me", async (req, res) => {
     const authHeader = req.headers.authorization;

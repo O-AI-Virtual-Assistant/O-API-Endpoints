@@ -10,5 +10,11 @@ export class User extends BaseEntity {
 
     @Column('text', {unique: true})
     githubId: string;
+
+    @Column('text')
+    userImg: string;
+
+    @Column('text', {nullable: true})
+    description: string;
 }
 
